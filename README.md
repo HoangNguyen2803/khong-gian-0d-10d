@@ -30,7 +30,3 @@ An interactive educational website for exploring geometric dimensions from 0D to
 Dimensions above 3D are represented through mathematical projections
 onto the 2D screen. They are visualizations, not direct displays of
 higher-dimensional space.
-
-## License
-
-MIT License

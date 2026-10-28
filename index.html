@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHÔNG GIAN | 0D — 10D</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #070b16;
+  --panel: #10182a;
+  --line: #273550;
+  --text: #eaf2ff;
+  --muted: #9bacc8;
+  --accent: #5de5ff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+}
+button, input { font: inherit; }
+button {
+  color: var(--text);
+  background: #18243b;
+  border: 1px solid #344767;
+  border-radius: 9px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: .15s;
+}
+button:hover { border-color: var(--accent); background: #203450; }
+button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+button.active {
+  color: #06121c;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 800;
+}
+header {
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #0b1120;
+}
+.eyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+h1 { font-size: clamp(24px, 4vw, 36px); margin: 5px 0; }
+header p { color: var(--muted); margin: 0; }
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 14px;
+  padding: 14px;
+  max-width: 1600px;
+  margin: auto;
+}
+.stage {
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 45%, #152743 0%, #0a1223 48%, #070b16 100%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  min-height: 550px;
+}
+#scene {
+  width: 100%;
+  height: 100%;
+  min-height: 550px;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+#scene.dragging { cursor: grabbing; }
+.overlay {
+  position: absolute;
+  pointer-events: none;
+  left: 18px;
+  top: 15px;
+}
+.dimension-label {
+  font-size: clamp(24px, 4vw, 42px);
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+#modelName { color: var(--accent); font-size: 13px; }
+.hint {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  right: 14px;
+  text-align: center;
+  color: #aabbd5;
+  font-size: 12px;
+  pointer-events: none;
+}
+.stats {
+  position: absolute;
+  top: 16px;
+  right: 15px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.stat {
+  background: #0b1425d9;
+  border: 1px solid #344767;
+  border-radius: 8px;
+  padding: 6px 9px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.stat b { color: var(--text); }
+.panel {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 0;
+}
+.section { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.section:last-child { border: 0; margin-bottom: 0; padding-bottom: 0; }
+h2 { font-size: 14px; margin: 0 0 12px; }
+.dimension-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+.dimension-grid button { padding: 10px 2px; font-weight: 700; }
+.control { margin: 13px 0; }
+.control-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.control-head label { color: #d9e5fa; }
+.control-head output { color: var(--accent); font-variant-numeric: tabular-nums; }
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.actions button { min-width: 0; }
+.actions .wide { grid-column: 1 / -1; }
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #dce8fa;
+  cursor: pointer;
+}
+.toggle input { accent-color: var(--accent); width: 17px; height: 17px; }
+.description {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+.status {
+  color: #8ff5d2;
+  font-size: 12px;
+  min-height: 18px;
+  margin-top: 9px;
+}
+footer {
+  color: #7184a3;
+  text-align: center;
+  font-size: 12px;
+  padding: 0 16px 20px;
+}
+@media (max-width: 850px) {
+  .app { grid-template-columns: 1fr; }
+  .stage, #scene { min-height: 440px; }
+  .panel { order: 2; }
+}
+@media (max-width: 480px) {
+  header { padding: 18px 15px; }
+  .app { padding: 9px; gap: 9px; }
+  .stage, #scene { min-height: 370px; }
+  .stats { top: 65px; left: 12px; right: 12px; justify-content: flex-start; }
+  .stat { padding: 4px 6px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">INTERACTIVE DIMENSION LAB</div>
+  <h1>KHÔNG GIAN <span style="color:#5de5ff">0D — 10D</span></h1>
+  <p>Khám phá hình học nhiều chiều bằng mô hình tương tác trực tiếp.</p>
+</header>
+
+<main class="app">
+  <section class="stage">
+    <canvas id="scene" aria-label="Mô hình không gian tương tác"></canvas>
+    <div class="overlay">
+      <div class="dimension-label" id="dimensionLabel">3D</div>
+      <div id="modelName">Khối lập phương</div>
+    </div>
+    <div class="stats">
+      <div class="stat">ĐIỂM <b id="vertexCount">8</b></div>
+      <div class="stat">CẠNH <b id="edgeCount">12</b></div>
+      <div class="stat">CHẾ ĐỘ <b id="modeLabel">3D</b></div>
+    </div>
+    <div class="hint">Kéo chuột: xoay · Chuột phải: dịch chuyển · Cuộn: phóng to/thu nhỏ · Chạm và kéo trên điện thoại</div>
+  </section>
+
+  <aside class="panel">
+    <section class="section">
+      <h2>01 / Chọn chiều không gian</h2>
+      <div class="dimension-grid" id="dimensionButtons">
+        <button data-d="0">0D</button><button data-d="1">1D</button>
+        <button data-d="2">2D</button><button data-d="3">3D</button>
+        <button data-d="4">4D</button><button data-d="5">5D</button>
+        <button data-d="6">6D</button><button data-d="7">7D</button>
+        <button data-d="8">8D</button><button data-d="9">9D</button>
+        <button data-d="10">10D</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>02 / Độ phức tạp</h2>
+      <div class="control">
+        <div class="control-head">
+          <label for="complexity">Mức chi tiết</label>
+          <output id="complexityValue">7/10</output>
+        </div>
+        <input id="complexity" type="range" min="1" max="10" value="7">
+      </div>
+      <p class="description">Mức cao hiển thị nhiều cạnh và điểm hơn. Số đỉnh của mô hình gốc phụ thuộc vào số chiều.</p>
+    </section>
+
+    <section class="section">
+      <h2>03 / Xoay trong không gian nhiều chiều</h2>
+      <p class="description">Các góc dưới đây xoay mô hình trong những mặt phẳng tọa độ khác nhau. Các góc từ 4D trở lên chỉ có tác dụng khi chọn chiều không gian phù hợp.</p>
+
+      <div class="control">
+        <div class="control-head"><label for="rotXY">Mặt phẳng XY</label><output id="valXY">25°</output></div>
+        <input id="rotXY" data-angle="xy" type="range" min="-180" max="180" value="25">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="rotXZ">Mặt phẳng XZ</label><output id="valXZ">-15°</output></div>
+        <input id="rotXZ" data-angle="xz" type="range" min="-180" max="180" value="-15">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="rotYZ">Mặt phẳng YZ</label><output id="valYZ">20°</output></div>
+        <input id="rotYZ" data-angle="yz" type="range" min="-180" max="180" value="20">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="rotXW">Mặt phẳng XW (4D+)</label><output id="valXW">30°</output></div>
+        <input id="rotXW" data-angle="xw" type="range" min="-180" max="180" value="30">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="rotZW">Mặt phẳng ZW (4D+)</label><output id="valZW">15°</output></div>
+        <input id="rotZW" data-angle="zw" type="range" min="-180" max="180" value="15">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="projection">Khoảng cách chiếu</label><output id="projectionValue">3.0</output></div>
+        <input id="projection" type="range" min="1.2" max="8" step="0.1" value="3">
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>04 / Điều khiển mô hình</h2>
+      <div class="actions">
+        <button id="autoRotate" class="active">⏸ Tạm dừng xoay</button>
+        <button id="randomize">⤨ Góc ngẫu nhiên</button>
+        <button id="resetView">↺ Đặt lại góc nhìn</button>
+        <button id="resetAll">⟲ Khôi phục tất cả</button>
+        <button id="toggleEdges" class="wide active">☑ Hiển thị cạnh</button>
+      </div>
+      <div class="status" id="status" role="status">Mô hình đã sẵn sàng.</div>
+    </section>
+
+    <section>
+      <h2>05 / Giải thích</h2>
+      <p class="description" id="dimensionDescription">3D: vật thể có chiều dài, chiều rộng và chiều cao.</p>
+    </section>
+  </aside>
+</main>
+
+<footer>
+  Mô hình minh họa hình chiếu toán học · Không gian 4D–10D được chiếu xuống màn hình 2D.
+</footer>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const canvas = $("scene");
+  const ctx = canvas.getContext("2d");
+
+  const state = {
+    dimension: 3,
+    complexity: 7,
+    projection: 3,
+    angles: { xy: 25, xz: -15, yz: 20, xw: 30, zw: 15 },
+    cameraX: -0.25,
+    cameraY: 0.35,
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    auto: true,
+    showEdges: true,
+    dragging: false,
+    dragButton: 0,
+    lastX: 0,
+    lastY: 0,
+    vertices: [],
+    edges: [],
+    width: 0,
+    height: 0,
+    dpr: 1
+  };
+
+  const names = [
+    "Điểm", "Đoạn thẳng", "Hình vuông", "Khối lập phương",
+    "Siêu lập phương 4D · Tesseract", "Siêu lập phương 5D",
+    "Siêu lập phương 6D", "Siêu lập phương 7D",
+    "Siêu lập phương 8D", "Siêu lập phương 9D",
+    "Siêu lập phương 10D"
+  ];
+
+  const descriptions = [
+    "0D: một điểm, không có chiều dài, chiều rộng hoặc chiều cao.",
+    "1D: đoạn thẳng có chiều dài nhưng không có chiều rộng hay chiều cao.",
+    "2D: hình vuông có chiều dài và chiều rộng, được biểu diễn trên mặt phẳng.",
+    "3D: vật thể có chiều dài, chiều rộng và chiều cao.",
+    "4D: tesseract là siêu lập phương 4 chiều. Ta xem hình chiếu của nó trong không gian 3D.",
+    "5D: siêu lập phương 5 chiều được biểu diễn bằng phép chiếu nhiều chiều.",
+    "6D: mô hình có 64 đỉnh trước khi chiếu xuống màn hình.",
+    "7D: mô hình có 128 đỉnh trước khi chiếu xuống màn hình.",
+    "8D: mô hình có 256 đỉnh trước khi chiếu xuống màn hình.",
+    "9D: mô hình có 512 đỉnh trước khi chiếu xuống màn hình.",
+    "10D: mô hình có 1.024 đỉnh và 5.120 cạnh trước khi áp dụng mức chi tiết."
+  ];
+
+  function makeHypercube(d) {
+    const count = 2 ** d;
+    const vertices = [];
+    const edges = [];
+
+    for (let mask = 0; mask < count; mask++) {
+      const p = [];
+      for (let axis = 0; axis < d; axis++) {
+        p.push((mask & (1 << axis)) ? 1 : -1);
+      }
+      vertices.push(p);
+    }
+
+    for (let i = 0; i < count; i++) {
+      for (let axis = 0; axis < d; axis++) {
+        const j = i ^ (1 << axis);
+        if (j > i) edges.push([i, j, axis]);
+      }
+    }
+    return { vertices, edges };
+  }
+
+  function rotatePlane(p, a, b, degrees) {
+    if (a >= p.length || b >= p.length) return;
+    const r = degrees * Math.PI / 180;
+    const c = Math.cos(r);
+    const s = Math.sin(r);
+    const x = p[a], y = p[b];
+    p[a] = x * c - y * s;
+    p[b] = x * s + y * c;
+  }
+
+  function transformND(vertex) {
+    const p = vertex.slice();
+
+    // Các phép quay trong những mặt phẳng tọa độ.
+    rotatePlane(p, 0, 1, state.angles.xy);
+    rotatePlane(p, 0, 2, state.angles.xz);
+    rotatePlane(p, 1, 2, state.angles.yz);
+    rotatePlane(p, 0, 3, state.angles.xw);
+    rotatePlane(p, 2, 3, state.angles.zw);
+
+    // Phối hợp thêm các mặt phẳng khi số chiều từ 5 trở lên.
+    if (p.length >= 5) {
+      rotatePlane(p, 1, 4, state.angles.xw * 0.7);
+      rotatePlane(p, 3, 4, state.angles.zw * 0.6);
+    }
+    if (p.length >= 6) {
+      rotatePlane(p, 0, 5, state.angles.xy * 0.45);
+      rotatePlane(p, 4, 5, state.angles.yz * 0.5);
+    }
+    if (p.length >= 7) {
+      rotatePlane(p, 2, 6, state.angles.xz * 0.55);
+    }
+    return p;
+  }
+
+  function projectND(vertex) {
+    const p = transformND(vertex);
+    let q = p.slice();
+
+    // Chiếu tuần tự các chiều cao hơn xuống ba tọa độ.
+    // Phép chiếu phối cảnh tạo hiệu ứng các phần xa nhỏ hơn.
+    for (let k = q.length - 1; k >= 3; k--) {
+      const denominator = Math.max(0.25, state.projection * 1.8 - q[k]);
+      const factor = state.projection * 1.8 / denominator;
+      for (let j = 0; j < k; j++) q[j] *= factor;
+      q.splice(k, 1);
+    }
+
+    while (q.length < 3) q.push(0);
+    return q.slice(0, 3);
+  }
+
+  function rotateCamera(point) {
+    let [x, y, z] = point;
+
+    const cY = Math.cos(state.cameraY), sY = Math.sin(state.cameraY);
+    [x, z] = [x * cY - z * sY, x * sY + z * cY];
+
+    const cX = Math.cos(state.cameraX), sX = Math.sin(state.cameraX);
+    [y, z] = [y * cX - z * sX, y * sX + z * cX];
+
+    return [x, y, z];
+  }
+
+  function projectToScreen(point) {
+    const [x, y, z] = rotateCamera(point);
+    const scale = Math.min(state.width, state.height) * 0.24 * state.zoom;
+    const perspective = 4.8 / Math.max(1.3, 4.8 - z * 0.25);
+    return {
+      x: state.width / 2 + state.panX + x * scale * perspective,
+      y: state.height / 2 + state.panY - y * scale * perspective,
+      z
+    };
+  }
+
+  function selectedEdges() {
+    const level = state.complexity;
+    if (level >= 10) return state.edges;
+
+    // Ở mức chi tiết thấp, ưu tiên các cạnh theo trục trước.
+    const stride = Math.max(1, Math.ceil((11 - level) / 2));
+    return state.edges.filter((edge, index) => {
+      if (level <= 2) return edge[2] === 0;
+      if (level <= 4) return edge[2] < 2 && index % stride === 0;
+      return index % stride === 0 || edge[2] < Math.ceil(level / 3);
+    });
+  }
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    state.width = Math.max(1, rect.width);
+    state.height = Math.max(1, rect.height);
+    canvas.width = Math.round(state.width * state.dpr);
+    canvas.height = Math.round(state.height * state.dpr);
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    render();
+  }
+
+  function drawGrid() {
+    const w = state.width, h = state.height;
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(103,153,210,0.08)";
+    const step = 32;
+    for (let x = (w / 2) % step; x < w; x += step) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = (h / 2) % step; y < h; y += step) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    if (!ctx || !state.width || !state.height) return;
+
+    const w = state.width, h = state.height;
+    ctx.clearRect(0, 0, w, h);
+    drawGrid();
+
+    // Điểm 0D vẫn được biểu diễn bằng một đỉnh.
+    const points = state.vertices.map(projectND).map(projectToScreen);
+    const edges = selectedEdges();
+
+    if (state.showEdges && state.dimension > 0) {
+      // Vẽ các cạnh xa trước để các cạnh gần nằm phía trên.
+      const sorted = edges.slice().sort((a, b) =>
+        (points[a[0]].z + points[a[1]].z) -
+        (points[b[0]].z + points[b[1]].z)
+      );
+
+      for (const [a, b, axis] of sorted) {
+        const p1 = points[a], p2 = points[b];
+        const depth = (p1.z + p2.z) / 2;
+        const alpha = Math.max(0.2, Math.min(0.95, 0.72 + depth * 0.06));
+        const hue = (185 + axis * 13) % 360;
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineWidth = axis === 0 ? 1.8 : 1.05;
+        ctx.strokeStyle = `hsla(${hue}, 95%, 68%, ${alpha})`;
+        ctx.stroke();
+      }
+    }
+
+    // Vẽ các đỉnh; ở độ phức tạp cao, các điểm xa nhỏ hơn.
+    const pointStride = state.complexity >= 9 ? 1 :
+      Math.max(1, Math.ceil(state.vertices.length / (12 + state.complexity * 14)));
+
+    points.forEach((p, i) => {
+      if (i % pointStride !== 0 && state.complexity < 10) return;
+      const radius = Math.max(1.3, Math.min(4.2, 2.1 + p.z * 0.12));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#dffaff";
+      ctx.shadowColor = "#42dfff";
+      ctx.shadowBlur = state.complexity >= 6 ? 10 : 4;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+
+    // Tâm phát sáng.
+    const cx = w / 2 + state.panX, cy = h / 2 + state.panY;
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.38);
+    glow.addColorStop(0, "rgba(40,155,220,0.06)");
+    glow.addColorStop(1, "rgba(40,155,220,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function rebuildModel() {
+    const model = makeHypercube(state.dimension);
+    state.vertices = model.vertices;
+    state.edges = model.edges;
+
+    $("dimensionLabel").textContent = state.dimension + "D";
+    $("modelName").textContent = names[state.dimension];
+    $("vertexCount").textContent = state.vertices.length.toLocaleString("vi-VN");
+    $("edgeCount").textContent = state.edges.length.toLocaleString("vi-VN");
+    $("modeLabel").textContent = state.dimension <= 3 ? "3D" : "Hình chiếu " + state.dimension + "D";
+    $("dimensionDescription").textContent = descriptions[state.dimension];
+
+    document.querySelectorAll("[data-d]").forEach(button => {
+      const selected = Number(button.dataset.d) === state.dimension;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+
+    $("status").textContent = "Đã tải mô hình " + state.dimension + "D.";
+    render();
+  }
+
+  function updateControlLabels() {
+    $("complexityValue").textContent = state.complexity + "/10";
+    $("projectionValue").textContent = state.projection.toFixed(1);
+
+    for (const key of Object.keys(state.angles)) {
+      $("val" + key.toUpperCase()).textContent = Math.round(state.angles[key]) + "°";
+    }
+  }
+
+  function setDimension(d) {
+    state.dimension = Math.max(0, Math.min(10, d));
+    rebuildModel();
+  }
+
+  document.querySelectorAll("[data-d]").forEach(button => {
+    button.addEventListener("click", () => setDimension(Number(button.dataset.d)));
+  });
+
+  $("complexity").addEventListener("input", event => {
+    state.complexity = Number(event.target.value);
+    updateControlLabels();
+    render();
+  });
+
+  document.querySelectorAll("[data-angle]").forEach(input => {
+    input.addEventListener("input", event => {
+      state.angles[event.target.dataset.angle] = Number(event.target.value);
+      updateControlLabels();
+      render();
+    });
+  });
+
+  $("projection").addEventListener("input", event => {
+    state.projection = Number(event.target.value);
+    updateControlLabels();
+    render();
+  });
+
+  $("autoRotate").addEventListener("click", () => {
+    state.auto = !state.auto;
+    $("autoRotate").textContent = state.auto ? "⏸ Tạm dừng xoay" : "▶ Tự động xoay";
+    $("autoRotate").classList.toggle("active", state.auto);
+    $("status").textContent = state.auto ? "Đã bật tự động xoay." : "Đã tạm dừng tự động xoay.";
+  });
+
+  $("randomize").addEventListener("click", () => {
+    for (const key of Object.keys(state.angles)) {
+      state.angles[key] = Math.round(Math.random() * 360 - 180);
+      $("rot" + key.toUpperCase()).value = state.angles[key];
+    }
+    state.cameraX = Math.random() * 1.2 - 0.6;
+    state.cameraY = Math.random() * Math.PI * 2;
+    updateControlLabels();
+    render();
+    $("status").textContent = "Đã tạo góc xoay ngẫu nhiên.";
+  });
+
+  function resetView() {
+    state.cameraX = -0.25;
+    state.cameraY = 0.35;
+    state.zoom = 1;
+    state.panX = 0;
+    state.panY = 0;
+    render();
+  }
+
+  $("resetView").addEventListener("click", () => {
+    resetView();
+    $("status").textContent = "Đã đặt lại góc nhìn và mức thu phóng.";
+  });
+
+  $("resetAll").addEventListener("click", () => {
+    state.complexity = 7;
+    state.projection = 3;
+    state.angles = { xy: 25, xz: -15, yz: 20, xw: 30, zw: 15 };
+    $("complexity").value = state.complexity;
+    $("projection").value = state.projection;
+
+    for (const key of Object.keys(state.angles)) {
+      $("rot" + key.toUpperCase()).value = state.angles[key];
+    }
+
+    state.showEdges = true;
+    $("toggleEdges").textContent = "☑ Hiển thị cạnh";
+    $("toggleEdges").classList.add("active");
+
+    resetView();
+    updateControlLabels();
+    rebuildModel();
+    $("status").textContent = "Đã khôi phục toàn bộ cài đặt.";
+  });
+
+  $("toggleEdges").addEventListener("click", () => {
+    state.showEdges = !state.showEdges;
+    $("toggleEdges").textContent = state.showEdges ? "☑ Hiển thị cạnh" : "☐ Ẩn cạnh";
+    $("toggleEdges").classList.toggle("active", state.showEdges);
+    render();
+  });
+
+  canvas.addEventListener("contextmenu", event => event.preventDefault());
+
+  canvas.addEventListener("pointerdown", event => {
+    state.dragging = true;
+    state.dragButton = event.button;
+    state.lastX = event.clientX;
+    state.lastY = event.clientY;
+    canvas.classList.add("dragging");
+    canvas.setPointerCapture(event.pointerId);
+  });
+
+  canvas.addEventListener("pointermove", event => {
+    if (!state.dragging) return;
+
+    const dx = event.clientX - state.lastX;
+    const dy = event.clientY - state.lastY;
+    state.lastX = event.clientX;
+    state.lastY = event.clientY;
+
+    // Chuột phải hoặc nút phụ: dịch chuyển khung nhìn.
+    if (state.dragButton === 2 || event.shiftKey) {
+      state.panX += dx;
+      state.panY += dy;
+    } else {
+      state.cameraY += dx * 0.008;
+      state.cameraX += dy * 0.008;
+      state.cameraX = Math.max(-Math.PI * 0.49, Math.min(Math.PI * 0.49, state.cameraX));
+    }
+    render();
+  });
+
+  function stopDragging() {
+    state.dragging = false;
+    canvas.classList.remove("dragging");
+  }
+  canvas.addEventListener("pointerup", stopDragging);
+  canvas.addEventListener("pointercancel", stopDragging);
+  canvas.addEventListener("lostpointercapture", stopDragging);
+
+  canvas.addEventListener("wheel", event => {
+    event.preventDefault();
+    state.zoom *= event.deltaY < 0 ? 1.09 : 0.92;
+    state.zoom = Math.max(0.25, Math.min(4, state.zoom));
+    render();
+  }, { passive: false });
+
+  // Animation dùng requestAnimationFrame, không cần thư viện ngoài.
+  let previousTime = 0;
+  function animate(time) {
+    if (state.auto && !state.dragging) {
+      const delta = previousTime ? Math.min(time - previousTime, 40) : 16;
+      state.cameraY += delta * 0.00018;
+      render();
+    }
+    previousTime = time;
+    requestAnimationFrame(animate);
+  }
+
+  // Khởi tạo canvas và mô hình.
+  updateControlLabels();
+  rebuildModel();
+
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(resizeCanvas).observe(canvas);
+  } else {
+    window.addEventListener("resize", resizeCanvas);
+  }
+
+  resizeCanvas();
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>
